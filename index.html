@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Grid Coloring</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: sans-serif;
+        margin: 0;
+        padding: 0;
+      }
+
+      #grid {
+        display: grid;
+        grid-template-columns: repeat(10, 1fr);
+        grid-auto-rows: 50px;
+        grid-gap: 10px;
+        margin: 20px;
+      }
+
+      .cell {
+        background-color: #eee;
+        border-radius: 5px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+      }
+
+      .color-input {
+        width: 100%;
+        height: 100%;
+        border: none;
+        border-radius: 5px;
+        padding: 5px;
+        font-size: 16px;
+        background-color: transparent;
+      }
+
+      .color-input:hover {
+        box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+      }
+
+      .color-paste-box {
+        margin: 20px;
+      }
+
+      textarea {
+        width: 100%;
+        height: 100px;
+        padding: 10px;
+        font-size: 16px;
+        border-radius: 5px;
+        border: 2px solid #ccc;
+        resize: vertical;
+      }
+
+      .copy-button {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        padding: 8px 10px;
+        font-size: 14px;
+        color: #333;
+        background-color: #f5f5f5;
+        border-radius: 5px;
+        cursor: pointer;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        transition: all 0.2s ease;
+        opacity: 0;
+        border: none;
+      }
+
+      .cell:hover .copy-button {
+        opacity: 1;
+      }
+
+      .copy-button:hover {
+        opacity: 0.8;
+        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="grid" id="grid"></div>
+    <script>
+      // Create color paste box
+      const colorPasteBox = document.createElement('div');
+      colorPasteBox.className = 'color-paste-box';
+
+      // Create color paste input
+      const colorPasteInput = document.createElement('textarea');
+      colorPasteInput.placeholder = 'Paste colors separated by spaces or commas';
+      colorPasteInput.value =
+        '#f8f9fa #f1f3f5 #e9ecef #dee2e6 #ced4da #adb5bd #868e96 #495057 #343a40 #212529 ' +
+        '#fff5f5 #ffe3e3 #ffc9c9 #ffa8a8 #ff8787 #ff6b6b #fa5252 #f03e3e #e03131 #c92a2a ' +
+        '#fff0f6 #ffdeeb #fcc2d7 #faa2c1 #f783ac #f06595 #e64980 #d6336c #c2255c #a61e4d ' +
+        '#f8f0fc #f3d9fa #eebefa #e599f7 #da77f2 #cc5de8 #be4bdb #ae3ec9 #9c36b5 #862e9c ' +
+        '#f3f0ff #e5dbff #d0bfff #b197fc #9775fa #845ef7 #7950f2 #7048e8 #6741d9 #5f3dc4 ' +
+        '#edf2ff #dbe4ff #bac8ff #91a7ff #748ffc #5c7cfa #4c6ef5 #4263eb #3b5bdb #364fc7 ' +
+        '#e7f5ff #d0ebff #a5d8ff #74c0fc #4dabf7 #339af0 #228be6 #1c7ed6 #1971c2 #1864ab ' +
+        '#e3fafc #c5f6fa #99e9f2 #66d9e8 #3bc9db #22b8cf #15aabf #1098ad #0c8599 #0b7285 ' +
+        '#e6fcf5 #c3fae8 #96f2d7 #63e6be #38d9a9 #20c997 #12b886 #0ca678 #099268 #087f5b ' +
+        '#ebfbee #d3f9d8 #b2f2bb #8ce99a #69db7c #51cf66 #40c057 #37b24d #2f9e44 #2b8a3e ' +
+        '#f4fce3 #e9fac8 #d8f5a2 #c0eb75 #a9e34b #94d82d #82c91e #74b816 #66a80f #5c940d ' +
+        '#fff9db #fff3bf #ffec99 #ffe066 #ffd43b #fcc419 #fab005 #f59f00 #f08c00 #e67700 ' +
+        '#fff4e6 #ffe8cc #ffd8a8 #ffc078 #ffa94d #ff922b #fd7e14 #f76707 #e8590c #d9480f';
+
+      // Define function to get contrast color
+      const getContrastColor = (color) => {
+        const r = parseInt(color.substr(1, 2), 16);
+        const g = parseInt(color.substr(3, 2), 16);
+        const b = parseInt(color.substr(5, 2), 16);
+        const brightness = (299 * r + 587 * g + 114 * b) / 1000;
+        return brightness < 128 ? '#fff' : '#000';
+      };
+
+      // Define function to update grid
+      const updateGrid = () => {
+        // Get colors from color paste input
+        const colors = colorPasteInput.value.split(/[, ]+/);
+
+        // Add or remove cells as needed
+        const numCellsToAdd = colors.length - grid.children.length;
+
+        for (let i = 0; i < Math.abs(numCellsToAdd); i++) {
+          if (numCellsToAdd > 0) {
+            const cell = createCell();
+            grid.appendChild(cell);
+          } else {
+            grid.removeChild(grid.lastChild);
+          }
+        }
+
+        // Update cells with new colors
+        Array.from(grid.children).forEach((cell, i) => {
+          const input = cell.firstChild;
+          input.value = colors[i];
+          input.style.backgroundColor = colors[i];
+          input.style.color = getContrastColor(colors[i]);
+        });
+      };
+
+      // Define function to create a new cell
+      const createCell = () => {
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+
+        const input = document.createElement('input');
+        input.className = 'color-input';
+        input.addEventListener('input', () => {
+          const index = Array.prototype.indexOf.call(grid.children, cell);
+          const colors = colorPasteInput.value.split(/[, ]+/);
+
+          if (index < colors.length) {
+            colors[index] = input.value;
+            colorPasteInput.value = colors.join(' ');
+          }
+
+          input.style.backgroundColor = input.value;
+          input.style.color = getContrastColor(input.value);
+        });
+
+        const copyButton = document.createElement('button');
+        copyButton.className = 'copy-button';
+        copyButton.innerText = 'Copy';
+        copyButton.addEventListener('click', () => {
+          input.select();
+          document.execCommand('copy');
+        });
+
+        cell.appendChild(input);
+        cell.appendChild(copyButton);
+
+        return cell;
+      };
+
+      // Add event listener to color paste input
+      colorPasteInput.addEventListener('input', updateGrid);
+
+      // Append color paste input to color paste box
+      colorPasteBox.appendChild(colorPasteInput);
+
+      // Append color paste box to document body
+      document.body.appendChild(colorPasteBox);
+
+      // Trigger initial update of grid
+      colorPasteInput.dispatchEvent(new Event('input'));
+    </script>
+  </body>
+</html>
